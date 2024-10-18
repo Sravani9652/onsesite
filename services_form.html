@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services Form</title>
+    <script>
+        // Function to add a new service form
+        function addServiceForm() {
+            const serviceContainer = document.getElementById('serviceForms');
+            const serviceDiv = document.createElement('div');
+            serviceDiv.className = 'service-form';
+            serviceDiv.innerHTML = `
+                <h4>Service</h4>
+                <label for="service_name">Service Name:</label><br>
+                <input type="text" id="service_name" name="service_name[]" required><br><br>
+
+                <label for="description">Description:</label><br>
+                <textarea id="description" name="description[]" required></textarea><br><br>
+
+                <label for="category">Category:</label><br>
+                <input type="text" id="category" name="category[]" required><br><br>
+
+                <label for="pricing">Pricing:</label><br>
+                <input type="number" id="pricing" name="pricing[]" required><br><br>
+                <hr>
+            `;
+            serviceContainer.appendChild(serviceDiv);
+        }
+
+        async function submitForm(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const formData = new FormData(event.target);
+            
+            try {
+                const response = await fetch('save_service.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                console.log(result);
+
+                if (result.message) {
+                    alert(result.message);
+                    // You may want to redirect or clear the form here
+                } else {
+                    alert(result.error || 'An error occurred.');
+                }
+            } catch (error) {
+                alert('Failed to submit the form. Please try again later.');
+                console.error('Error:', error);
+            }
+        }
+
+        // Fetch services when the page loads
+        window.onload = function() {
+            // Removed fetchServices() to ensure services are not displayed
+        };
+    </script>
+</head>
+<body>
+
+<h2>Services Form</h2>
+<form onsubmit="submitForm(event)">
+    <div id="serviceForms">
+        <h4>Service</h4>
+        <label for="service_name">Service Name:</label><br>
+        <input type="text" id="service_name" name="service_name[]" required><br><br>
+
+        <label for="description">Description:</label><br>
+        <textarea id="description" name="description[]" required></textarea><br><br>
+
+        <label for="category">Category:</label><br>
+        <input type="text" id="category" name="category[]" required><br><br>
+
+        <label for="pricing">Pricing:</label><br>
+        <input type="number" id="pricing" name="pricing[]" required><br><br>
+    </div>
+    <button type="button" onclick="addServiceForm()">Add Service</button>
+    <input type="submit" value="Submit">
+
+    <!-- Link to view available services -->
+    <a href="display_services.php" style="display: block; margin-top: 20px;">View Available Services</a>
+</form>
+
+</body>
+</html>
