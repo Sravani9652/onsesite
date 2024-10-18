@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Bar Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Navigation bar styles */
+        .navbar {
+            display: flex; /* Use Flexbox for equal spacing */
+            background-color: #333;
+            overflow: hidden;
+            justify-content: space-around; /* Spread items equally */
+        }
+
+        .navbar a {
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 20px; /* Adjusted padding for more space */
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+
+        /* Page content styles */
+        .content {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Page Content -->
+<div class="content">
+    <h1>Welcome to Our Website</h1>
+    <p>You can click on the links below to navigate to different sections.</p>
+</div>
+
+<!-- Navigation Bar -->
+<div class="navbar">
+    <a href="onesite.html">Introduction</a>
+    <a href="services.html">Services</a>
+    <a href="products.html">Products</a>
+</div>
+
+</body>
+</html>

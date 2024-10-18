@@ -3,29 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Product</title>
+    <title>Add Products</title>
+    <style>
+        .product-entry {
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            margin: 10px;
+            display: inline-block; /* Make the product entries display side by side */
+            vertical-align: top;  /* Align the top of the entries */
+            width: 200px; /* Set a width for uniformity */
+        }
+
+        .remove-button {
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .image-preview {
+            margin-top: 5px;
+            max-width: 150px; /* Adjust size for image preview */
+            display: block;
+        }
+    </style>
 </head>
 <body>
 
-<h2>Add a Product</h2>
-<form action="submit_product.php" method="POST" enctype="multipart/form-data">
-    <label for="product_name">Product Name:</label><br>
-    <input type="text" id="product_name" name="product_name" required><br><br>
+<h2>Add Products</h2>
+<form id="productForm" action="submit_product.php" method="POST" enctype="multipart/form-data">
+    <div id="productContainer">
+        <div class="product-entry">
+            <label for="product_name">Product Name:</label><br>
+            <input type="text" name="product_name[]" required><br><br>
 
-    <label for="description">Product Description:</label><br>
-    <textarea id="description" name="description" rows="4" cols="50" required></textarea><br><br>
+            <label for="description">Product Description:</label><br>
+            <textarea name="description[]" rows="4" cols="50" required></textarea><br><br>
 
-    <label for="price">Price:</label><br>
-    <input type="number" id="price" name="price" required><br><br>
+            <label for="price">Price:</label><br>
+            <input type="number" name="price[]" required><br><br>
 
-    <label for="category">Category:</label><br>
-    <input type="text" id="category" name="category" required><br><br>
+            <label for="category">Category:</label><br>
+            <input type="text" name="category[]" required><br><br>
 
-    <label for="product_image">Product Image:</label><br>
-    <input type="file" id="product_image" name="product_image" accept="image/*" required><br><br>
+            <label for="product_image">Product Image:</label><br>
+            <input type="file" name="product_image[]" accept="image/*" onchange="previewImage(this)" required><br>
+            <img class="image-preview" style="display:none;"><br><br>
 
-    <input type="submit" value="Add Product">
+            <input type="button" class="remove-button" value="Remove Product" onclick="removeProduct(this)">
+        </div>
+    </div>
+    <input type="button" value="Add Another Product" onclick="addProduct()"><br><br>
+    <input type="submit" value="Add Products">
 </form>
+
+<!-- Script to handle adding/removing product fields -->
+<script>
+    function addProduct() {
+        const productContainer = document.getElementById('productContainer');
+        const newProductEntry = document.createElement('div');
+        newProductEntry.className = 'product-entry';
+        newProductEntry.innerHTML = `
+            <label for="product_name">Product Name:</label><br>
+            <input type="text" name="product_name[]" required><br><br>
+
+            <label for="description">Product Description:</label><br>
+            <textarea name="description[]" rows="4" cols="50" required></textarea><br><br>
+
+            <label for="price">Price:</label><br>
+            <input type="number" name="price[]" required><br><br>
+
+            <label for="category">Category:</label><br>
+            <input type="text" name="category[]" required><br><br>
+
+            <label for="product_image">Product Image:</label><br>
+            <input type="file" name="product_image[]" accept="image/*" onchange="previewImage(this)" required><br>
+            <img class="image-preview" style="display:none;"><br><br>
+
+            <input type="button" class="remove-button" value="Remove Product" onclick="removeProduct(this)">
+        `;
+        productContainer.appendChild(newProductEntry);
+    }
+
+    function removeProduct(button) {
+        const productEntry = button.parentElement;
+        productEntry.parentElement.removeChild(productEntry);
+    }
+
+    function previewImage(input) {
+        const file = input.files[0];
+        const preview = input.nextElementSibling; // Assuming the img tag is right after the input
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block'; // Show the preview
+            }
+            reader.readAsDataURL(file);
+        } else {
+            preview.style.display = 'none'; // Hide the preview if no file is selected
+        }
+    }
+</script>
 
 </body>
 </html>
