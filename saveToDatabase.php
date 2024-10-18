@@ -86,16 +86,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (isset($response['candidates'][0]['content']['parts'][0]['text'])) {
             $generatedText = htmlspecialchars($response['candidates'][0]['content']['parts'][0]['text']);
             
+            // Sanitize the generated text to remove special characters and symbols
+            $sanitizedText = preg_replace('/[^A-Za-z0-9\s]/', '', $generatedText); // Allow only letters, numbers, and spaces
+
             // Store the API response in the 'api_responses' table
             $responseSql = "INSERT INTO api_responses (id, api_response) VALUES (:id, :api_response)";
             $responseStmt = $pdo->prepare($responseSql);
             $responseStmt->execute([
                 ':id' => $companyId,  // Use company id as the foreign key reference
-                ':api_response' => $generatedText
+                ':api_response' => $sanitizedText
             ]);
 
             // Return the response as JSON
-            echo json_encode(['message' => $generatedText]);
+            echo json_encode(['message' => $sanitizedText]);
         } else {
             echo json_encode(['error' => 'API Error: ' . json_encode($response)]);
         }

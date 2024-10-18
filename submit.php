@@ -1,4 +1,6 @@
 <?php
+session_start(); // Start the session
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $formData = $_POST;
 
@@ -11,8 +13,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $response = curl_exec($ch);
     curl_close($ch);
 
-    // Return the response back to the client
-    echo $response;
+    // Store the response in a session variable
+    $_SESSION['api_response'] = $response;
+
+    // Redirect to the response page
+    header('Location: response.html');
     exit;
 }
 
