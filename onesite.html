@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Information Form</title>
+    <script>
+        async function submitForm(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const formData = new FormData(event.target);
+            
+            // Send form data to submit.php
+            const response = await fetch('saveToDatabase.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            console.log(result);
+
+            // Display the generated paragraph in the description box
+            document.getElementById('apiResponse').value = result.message || result.error || 'An error occurred.';
+        }
+    </script>
+</head>
+<body>
+
+<h2>Company Information Form</h2>
+<form onsubmit="submitForm(event)" method="POST">
+    <label for="company_name">Company Name:</label><br>
+    <input type="text" id="company_name" name="company_name" required><br><br>
+
+    <label for="year_established">Year of Establishment:</label><br>
+    <input type="number" id="year_established" name="year_established" min="1900" max="2024" required><br><br>
+
+    <label for="logo">Logo (Text):</label><br>
+    <input type="text" id="logo" name="logo" required><br><br>
+
+    <label for="phoneNumber">Phone Number:</label><br>
+    <input type="tel" id="phoneNumber" name="phoneNumber" required><br><br>
+
+    <label for="description">Company Description:</label><br>
+    <textarea id="description" name="description" required></textarea><br><br>
+
+    <label for="industry">Industry:</label><br>
+    <input type="text" id="industry" name="industry" required><br><br>
+
+    <label for="location">Location:</label><br>
+    <input type="text" id="location" name="location" required><br><br>
+
+    <input type="submit" value="Submit">
+</form>
+
+<h3>API Response</h3>
+<textarea id="apiResponse" rows="20" cols="150" readonly></textarea>
+
+</body>
+</html>

@@ -1,0 +1,21 @@
+<?php
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $formData = $_POST;
+
+    // Send the form data to saveToDatabase.php
+    $ch = curl_init('saveToDatabase.php');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $formData);
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    // Return the response back to the client
+    echo $response;
+    exit;
+}
+
+http_response_code(405);
+echo json_encode(['error' => 'Method Not Allowed']);
+exit;
