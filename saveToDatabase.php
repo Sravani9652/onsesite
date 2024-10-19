@@ -1,21 +1,29 @@
 <?php
-// Database connection settings
-$host = 'localhost';
-$dbname = 'company_info';
-$username = 'root';
-$password = '';
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// Establish a database connection using PDO
+// Database connection parameters
+$host = 'localhost';
+$db = 'company_info';
+$user = 'root';
+$pass = '';
+$charset = 'utf8';
+
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES => false,
+];
+
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (PDOException $e) {
-    echo json_encode(['error' => 'Connection failed: ' . $e->getMessage()]);
-    exit;
+    die(json_encode(['error' => 'Database connection failed: ' . $e->getMessage()]));
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Sanitize and retrieve form input
+    // Sanitize and retrieve input data
     $companyName = htmlspecialchars($_POST['company_name']);
     $year = htmlspecialchars($_POST['year_established']);
     $logo = htmlspecialchars($_POST['logo']);
@@ -24,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $industry = htmlspecialchars($_POST['industry']);
     $location = htmlspecialchars($_POST['location']);
 
-    // Insert data into the 'companies' table
+    // Prepare and execute the insertion into the 'companies' table
     $sql = "INSERT INTO companies (company_name, year_established, logo, phone_number, description, industry, location)
             VALUES (:company_name, :year_established, :logo, :phone_number, :description, :industry, :location)";
 
@@ -40,68 +48,74 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             ':location' => $location
         ]);
 
-        // Get the ID of the inserted company record (This will be used in the API response table)
-        $companyId = $pdo->lastInsertId();
-
-        // Prepare the data for the API request
-        $apiKey = 'AIzaSyCxz8nQkAAYStq6MNcRpXf3nJfjggyR9Ec'; // Replace with your actual API key
+        // Prepare data for API requests
+        $apiKey = 'AIzaSyCxz8nQkAAYStq6MNcRpXf3nJfjggyR9Ec';
         $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . $apiKey;
 
-        $data = [
-            'contents' => [
-                [
-                    'parts' => [
-                        [
-                            'text' => "Company Name: $companyName, Established in: $year, Logo: $logo, Phone Number: $phoneNumber, Description: $description, Industry: $industry, Location: $location."
+        // Prepare field array for API requests
+        $fields = [
+            'Company Name' => $companyName,
+            'Year Established' => $year,
+            'Logo' => $logo,
+            'Phone Number' => $phoneNumber,
+            'Description' => $description,
+            'Industry' => $industry,
+            'Location' => $location,
+        ];
+
+        $queryParams = []; // Initialize an array for query parameters
+
+        // Execute API requests for each field
+        foreach ($fields as $field => $value) {
+            $data = [
+                'contents' => [
+                    [
+                        'parts' => [
+                            [
+                                'text' => "Generate a description based on the following information: $field: $value."
+                            ]
                         ]
                     ]
                 ]
-            ]
-        ];
+            ];
 
-        // Prepare options for the API request
-        $options = [
-            'http' => [
-                'header'  => "Content-Type: application/json\r\n",
-                'method'  => 'POST',
-                'content' => json_encode($data),
-            ]
-        ];
+            // Use CURL for the API request
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 
-        // Execute the request
-        $context  = stream_context_create($options);
-        $result = @file_get_contents($url, false, $context); // Suppress warnings
+            $result = curl_exec($ch);
+            if (curl_errno($ch)) {
+                echo json_encode(['error' => 'API request failed: ' . curl_error($ch)]);
+                exit;
+            }
+            curl_close($ch);
 
-        // Handle errors in API request
-        if ($result === FALSE) {
-            $error = error_get_last(); // Capture the last error
-            echo json_encode(['error' => 'API request failed: ' . $error['message']]);
-            exit;
+            // Decode the API response
+            $response = json_decode($result, true);
+
+            // Collect the text response, limiting to 30 words
+            if (isset($response['candidates']) && count($response['candidates']) > 0) {
+                $candidate = $response['candidates'][0];
+                if (isset($candidate['content']['parts'][0]['text'])) {
+                    $responseText = $candidate['content']['parts'][0]['text'];
+                    // Limit response to 30 words
+                    $limitedResponse = implode(' ', array_slice(explode(' ', $responseText), 0, 30));
+                    $queryParams[$field] = $limitedResponse; // Store response for each field
+                } else {
+                    $queryParams[$field] = "Error: Invalid response structure.";
+                }
+            } else {
+                $queryParams[$field] = "Error: No candidates found.";
+            }
         }
 
-        // Decode the JSON response
-        $response = json_decode($result, true);
-
-        // Output the generated paragraph
-        if (isset($response['candidates'][0]['content']['parts'][0]['text'])) {
-            $generatedText = htmlspecialchars($response['candidates'][0]['content']['parts'][0]['text']);
-            
-            // Sanitize the generated text to remove special characters and symbols
-            $sanitizedText = preg_replace('/[^A-Za-z0-9\s]/', '', $generatedText); // Allow only letters, numbers, and spaces
-
-            // Store the API response in the 'api_responses' table
-            $responseSql = "INSERT INTO api_responses (id, api_response) VALUES (:id, :api_response)";
-            $responseStmt = $pdo->prepare($responseSql);
-            $responseStmt->execute([
-                ':id' => $companyId,  // Use company id as the foreign key reference
-                ':api_response' => $sanitizedText
-            ]);
-
-            // Return the response as JSON
-            echo json_encode(['message' => $sanitizedText]);
-        } else {
-            echo json_encode(['error' => 'API Error: ' . json_encode($response)]);
-        }
+        // Redirect to response.php with the responses as a query string
+        $queryString = http_build_query($queryParams);
+        header("Location: response.php?$queryString");
+        exit;
     } catch (PDOException $e) {
         echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
     }
@@ -109,7 +123,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     exit;
 }
 
-// If the request method is not POST, return a 405 Method Not Allowed response
 http_response_code(405);
 echo json_encode(['error' => 'Method Not Allowed']);
 exit;
+?>

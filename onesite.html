@@ -19,10 +19,7 @@
             const result = await response.json();
             console.log(result);
 
-            // Store the API response in sessionStorage
-            sessionStorage.setItem('apiResponse', result.message || result.error || 'An error occurred.');
-
-            // Redirect to response.html
+            // Redirect to response.php
             window.location.href = 'response.php';
         }
     </script>
