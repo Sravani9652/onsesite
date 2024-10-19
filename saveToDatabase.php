@@ -52,12 +52,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $apiKey = 'AIzaSyCxz8nQkAAYStq6MNcRpXf3nJfjggyR9Ec';
         $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . $apiKey;
 
-        // Prepare field array for API requests
+        // Prepare field array for API requests excluding phone number
         $fields = [
             'Company Name' => $companyName,
             'Year Established' => $year,
             'Logo' => $logo,
-            'Phone Number' => $phoneNumber,
             'Description' => $description,
             'Industry' => $industry,
             'Location' => $location,
@@ -65,14 +64,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $queryParams = []; // Initialize an array for query parameters
 
-        // Execute API requests for each field
+        // Execute API requests for each field except phone number
         foreach ($fields as $field => $value) {
             $data = [
                 'contents' => [
                     [
                         'parts' => [
                             [
-                                'text' => "Generate a description based on the following information: $field: $value."
+                                'text' => "Create a description for: $field is $value."
                             ]
                         ]
                     ]
@@ -111,6 +110,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $queryParams[$field] = "Error: No candidates found.";
             }
         }
+
+        // Add the phone number response separately
+        $queryParams['Phone Number'] = "For further details, contact this number: $phoneNumber.";
 
         // Redirect to response.php with the responses as a query string
         $queryString = http_build_query($queryParams);
